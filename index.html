@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Google Ads Pipeline Calculator | Specter Corwin</title>
+<meta name="description" content="Project your Google Ads pipeline value with adjustable inputs for search volume, CPC, conversion rates, and customer value." />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #FAFAF7;
+    --surface: #FFFFFF;
+    --surface-secondary: #F1EFE8;
+    --border: rgba(0, 0, 0, 0.08);
+    --border-strong: rgba(0, 0, 0, 0.15);
+    --text-primary: #1A1A1A;
+    --text-secondary: #5F5E5A;
+    --text-tertiary: #888780;
+    --accent: #1F3A5F;
+    --success: #3B6D11;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1A1A1A;
+      --surface: #252525;
+      --surface-secondary: #2C2C2A;
+      --border: rgba(255, 255, 255, 0.1);
+      --border-strong: rgba(255, 255, 255, 0.18);
+      --text-primary: #F5F5F0;
+      --text-secondary: #B4B2A9;
+      --text-tertiary: #888780;
+      --success: #97C459;
+    }
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    line-height: 1.6;
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+  header h1 {
+    font-size: 28px;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.01em;
+  }
+  header p {
+    color: var(--text-secondary);
+    font-size: 15px;
+  }
+  .card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .section-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 1rem;
+  }
+  .input-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 2fr) 80px;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .input-row:last-child { border-bottom: none; }
+  .input-label-wrap { min-width: 0; }
+  .input-label {
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+  .input-hint {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    display: block;
+    margin-top: 2px;
+  }
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--border-strong);
+    border-radius: 2px;
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--surface);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--surface);
+  }
+  .input-value {
+    font-size: 14px;
+    font-weight: 500;
+    text-align: right;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+  }
+  .headline-card {
+    background: var(--surface-secondary);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem 1.75rem;
+    margin: 1.5rem 0;
+  }
+  .headline-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+  }
+  .headline-value {
+    font-size: 36px;
+    font-weight: 500;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .headline-sub {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-top: 8px;
+  }
+  .roas-positive { color: var(--success); font-weight: 500; }
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 1rem;
+  }
+  @media (min-width: 480px) {
+    .results-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
+  .metric-card {
+    background: var(--surface-secondary);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+  }
+  .metric-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+  }
+  .metric-value {
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+  }
+  .metric-sub {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 4px;
+  }
+  .disclaimer {
+    font-size: 13px;
+    color: var(--text-tertiary);
+    line-height: 1.6;
+    text-align: center;
+    margin-top: 2rem;
+    padding: 0 1rem;
+  }
+  .footer {
+    text-align: center;
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 0.5px solid var(--border);
+    font-size: 13px;
+    color: var(--text-tertiary);
+  }
+  .footer a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-bottom: 0.5px solid var(--border-strong);
+  }
+  .footer a:hover { color: var(--text-primary); }
+</style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Google Ads Pipeline Calculator</h1>
+      <p>Project monthly pipeline value, ROAS, and customer acquisition cost</p>
+    </header>
+
+    <div class="card">
+      <div class="section-label">Campaign inputs</div>
+
+      <div class="input-row">
+        <div class="input-label-wrap">
+          <div class="input-label">Monthly search volume</div>
+          <span class="input-hint">Sum across all keywords</span>
+        </div>
+        <input type="range" min="500" max="50000" value="8000" step="500" id="vol" />
+        <div class="input-value" id="vol-out">8,000</div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-label-wrap">
+          <div class="input-label">Average CPC</div>
+          <span class="input-hint">Weighted average</span>
+        </div>
+        <input type="range" min="1" max="25" value="4.5" step="0.25" id="cpc" />
+        <div class="input-value" id="cpc-out">$4.50</div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-label-wrap">
+          <div class="input-label">Click-through rate</div>
+          <span class="input-hint">3-5% B2B baseline</span>
+        </div>
+        <input type="range" min="1" max="10" value="3" step="0.5" id="ctr" />
+        <div class="input-value" id="ctr-out">3.0%</div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-label-wrap">
+          <div class="input-label">Landing page conversion</div>
+          <span class="input-hint">2% conservative B2B</span>
+        </div>
+        <input type="range" min="0.5" max="8" value="2" step="0.25" id="conv" />
+        <div class="input-value" id="conv-out">2.0%</div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-label-wrap">
+          <div class="input-label">Lead-to-customer close rate</div>
+          <span class="input-hint">15-25% B2B default</span>
+        </div>
+        <input type="range" min="5" max="40" value="15" step="1" id="close" />
+        <div class="input-value" id="close-out">15%</div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-label-wrap">
+          <div class="input-label">Average customer value</div>
+          <span class="input-hint">Annual contract value</span>
+        </div>
+        <input type="range" min="500" max="50000" value="5000" step="500" id="val" />
+        <div class="input-value" id="val-out">$5,000</div>
+      </div>
+
+      <div class="headline-card">
+        <div class="headline-label">Projected monthly pipeline</div>
+        <div class="headline-value" id="headline-pipeline">$3,600</div>
+        <div class="headline-sub" id="headline-sub">on $1,080 monthly ad spend · <span class="roas-positive" id="headline-roas">3.3x ROAS</span></div>
+      </div>
+
+      <div class="results-grid">
+        <div class="metric-card">
+          <div class="metric-label">Monthly clicks</div>
+          <div class="metric-value" id="m-clicks">240</div>
+          <div class="metric-sub" id="m-clicks-sub">from 8,000 searches</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Monthly leads</div>
+          <div class="metric-value" id="m-leads">4.8</div>
+          <div class="metric-sub" id="m-leads-sub">$225 cost per lead</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">New customers / mo</div>
+          <div class="metric-value" id="m-customers">0.7</div>
+          <div class="metric-sub" id="m-customers-sub">$1,500 CAC</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Annual pipeline</div>
+          <div class="metric-value" id="m-annual">$43,200</div>
+          <div class="metric-sub">at current settings</div>
+        </div>
+      </div>
+    </div>
+
+    <p class="disclaimer">
+      Conservative estimates based on industry benchmarks for B2B Google Ads. Real results depend on landing page quality, ad copy, and bidding strategy. Use the scenario tabs to compare outcomes.
+    </p>
+
+    <div class="footer">
+      Built by <a href="https://spectercorwin.co.uk">Specter Corwin</a>
+    </div>
+  </div>
+
+<script>
+(function() {
+  var fmt = new Intl.NumberFormat('en-US');
+  var fmtCurrency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+  var fmtCurrencyDecimal = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  var inputs = {
+    vol: document.getElementById('vol'),
+    cpc: document.getElementById('cpc'),
+    ctr: document.getElementById('ctr'),
+    conv: document.getElementById('conv'),
+    close: document.getElementById('close'),
+    val: document.getElementById('val')
+  };
+
+  var outputs = {
+    vol: document.getElementById('vol-out'),
+    cpc: document.getElementById('cpc-out'),
+    ctr: document.getElementById('ctr-out'),
+    conv: document.getElementById('conv-out'),
+    close: document.getElementById('close-out'),
+    val: document.getElementById('val-out')
+  };
+
+  function calculate() {
+    var vol = parseFloat(inputs.vol.value);
+    var cpc = parseFloat(inputs.cpc.value);
+    var ctr = parseFloat(inputs.ctr.value) / 100;
+    var conv = parseFloat(inputs.conv.value) / 100;
+    var close = parseFloat(inputs.close.value) / 100;
+    var val = parseFloat(inputs.val.value);
+
+    var clicks = Math.round(vol * ctr);
+    var spend = Math.round(clicks * cpc);
+    var leads = clicks * conv;
+    var customers = leads * close;
+    var revenue = Math.round(customers * val);
+    var annual = revenue * 12;
+    var roas = spend > 0 ? revenue / spend : 0;
+    var cpl = leads > 0 ? Math.round(spend / leads) : 0;
+    var cac = customers > 0 ? Math.round(spend / customers) : 0;
+
+    outputs.vol.textContent = fmt.format(vol);
+    outputs.cpc.textContent = fmtCurrencyDecimal.format(cpc);
+    outputs.ctr.textContent = (ctr * 100).toFixed(1) + '%';
+    outputs.conv.textContent = (conv * 100).toFixed(1) + '%';
+    outputs.close.textContent = Math.round(close * 100) + '%';
+    outputs.val.textContent = fmtCurrency.format(val);
+
+    document.getElementById('headline-pipeline').textContent = fmtCurrency.format(revenue);
+    document.getElementById('headline-sub').innerHTML = 'on ' + fmtCurrency.format(spend) + ' monthly ad spend · <span class="roas-positive">' + roas.toFixed(1) + 'x ROAS</span>';
+
+    document.getElementById('m-clicks').textContent = fmt.format(clicks);
+    document.getElementById('m-clicks-sub').textContent = 'from ' + fmt.format(vol) + ' searches';
+    document.getElementById('m-leads').textContent = leads.toFixed(1);
+    document.getElementById('m-leads-sub').textContent = fmtCurrency.format(cpl) + ' cost per lead';
+    document.getElementById('m-customers').textContent = customers.toFixed(1);
+    document.getElementById('m-customers-sub').textContent = fmtCurrency.format(cac) + ' CAC';
+    document.getElementById('m-annual').textContent = fmtCurrency.format(annual);
+  }
+
+  Object.keys(inputs).forEach(function(key) {
+    inputs[key].addEventListener('input', calculate);
+  });
+
+  calculate();
+})();
+</script>
+</body>
+</html>
