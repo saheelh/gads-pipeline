@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Google Ads Pipeline Calculator | Specter Corwin</title>
+  <meta name="description" content="Project monthly pipeline value, ROAS, and customer acquisition cost from your Google Ads campaigns." />
+  <script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+  <script>
+    // Fallback to unpkg if jsDelivr is blocked
+    if (typeof React === "undefined") {
+      document.write('<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin><\/script>');
+      document.write('<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin><\/script>');
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, system-ui, sans-serif; font-weight: 500; background-color: #FAFAF7; color: #0f172a; }
+    .wrap { max-width: 768px; margin: 0 auto; padding: 40px 20px; }
+    .brand { display: flex; align-items: center; gap: 8px; margin-bottom: 48px; }
+    .brand-mark { width: 28px; height: 28px; border-radius: 6px; background: #0f172a; color: white; font-size: 11px; display: flex; align-items: center; justify-content: center; }
+    .brand-name { font-size: 14px; }
+    .heading { text-align: center; margin-bottom: 40px; }
+    .heading h1 { font-size: 40px; margin: 0; letter-spacing: -0.02em; line-height: 1.15; font-weight: 500; }
+    .heading p { color: #475569; margin-top: 12px; font-size: 15px; }
+    .card { background: white; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.04); padding: 32px; }
+    .label-tiny { font-size: 11px; letter-spacing: 0.12em; color: #64748b; text-transform: uppercase; margin-bottom: 8px; }
+    .row { display: grid; grid-template-columns: 4fr 6fr 2fr; gap: 16px; align-items: center; padding: 14px 0; border-bottom: 1px solid #f1f5f9; }
+    .row:last-child { border-bottom: none; }
+    .row-label { font-size: 15px; line-height: 1.2; }
+    .row-sub { font-size: 12px; color: #64748b; margin-top: 2px; }
+    .row-val { text-align: right; font-size: 15px; font-variant-numeric: tabular-nums; }
+    input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 999px; outline: none; cursor: pointer; }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #0f172a; cursor: pointer; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+    input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #0f172a; cursor: pointer; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+    .hero { margin-top: 24px; border-radius: 12px; padding: 24px; background: #F1EFE8; }
+    .hero-cap { font-size: 12px; color: #475569; margin-bottom: 4px; }
+    .hero-val { font-size: 48px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+    .hero-sub { font-size: 14px; color: #475569; margin-top: 8px; }
+    .hero-strong { color: #0f172a; }
+    .hero-roas { color: #047857; }
+    .stats { margin-top: 12px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .stat { border-radius: 12px; padding: 16px; background: #F1EFE8; }
+    .stat-label { font-size: 11px; color: #475569; }
+    .stat-val { font-size: 20px; margin-top: 4px; font-variant-numeric: tabular-nums; }
+    .stat-sub { font-size: 11px; color: #64748b; margin-top: 2px; }
+    .footer { text-align: center; font-size: 12px; color: #64748b; margin-top: 32px; max-width: 560px; margin-left: auto; margin-right: auto; line-height: 1.6; }
+    @media (max-width: 640px) {
+      .row { grid-template-columns: 1fr; gap: 8px; }
+      .row-val { text-align: left; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .heading h1 { font-size: 32px; }
+      .hero-val { font-size: 40px; }
+      .card { padding: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script>
+    var e = React.createElement;
+    var useState = React.useState;
+    var useMemo = React.useMemo;
+
+    function fmtNum(n, d) {
+      d = d || 0;
+      return n.toLocaleString("en-US", { maximumFractionDigits: d, minimumFractionDigits: d });
+    }
+    function usd(n) { return "$" + fmtNum(Math.round(n)); }
+    function usdDec(n) { return "$" + fmtNum(n, 2); }
+
+    function Slider(props) {
+      var pct = ((props.value - props.min) / (props.max - props.min)) * 100;
+      return e("div", { className: "row" },
+        e("div", null,
+          e("div", { className: "row-label" }, props.label),
+          props.sub ? e("div", { className: "row-sub" }, props.sub) : null
+        ),
+        e("div", null,
+          e("input", {
+            type: "range",
+            min: props.min,
+            max: props.max,
+            step: props.step,
+            value: props.value,
+            onChange: function (ev) { props.onChange(parseFloat(ev.target.value)); },
+            style: {
+              background: "linear-gradient(to right, #0f172a 0%, #0f172a " + pct + "%, #e2e8f0 " + pct + "%, #e2e8f0 100%)"
+            }
+          })
+        ),
+        e("div", { className: "row-val" }, props.format(props.value))
+      );
+    }
+
+    function PipelineCalculator() {
+      var sv = useState(8000); var searchVolume = sv[0]; var setSearchVolume = sv[1];
+      var c = useState(5); var cpc = c[0]; var setCpc = c[1];
+      var t = useState(3); var ctr = t[0]; var setCtr = t[1];
+      var l = useState(5); var lpConv = l[0]; var setLpConv = l[1];
+      var cl = useState(15); var closeRate = cl[0]; var setCloseRate = cl[1];
+      var a = useState(5000); var acv = a[0]; var setAcv = a[1];
+
+      var r = useMemo(function () {
+        var clicks = searchVolume * (ctr / 100);
+        var adSpend = clicks * cpc;
+        var leads = clicks * (lpConv / 100);
+        var customers = leads * (closeRate / 100);
+        var pipeline = customers * acv;
+        var roas = adSpend > 0 ? pipeline / adSpend : 0;
+        var costPerLead = leads > 0 ? adSpend / leads : 0;
+        var cac = customers > 0 ? adSpend / customers : 0;
+        return { clicks: clicks, adSpend: adSpend, leads: leads, customers: customers, pipeline: pipeline, roas: roas, costPerLead: costPerLead, cac: cac };
+      }, [searchVolume, cpc, ctr, lpConv, closeRate, acv]);
+
+      return e("div", { className: "wrap" },
+        e("div", { className: "brand" },
+          e("div", { className: "brand-mark" }, "SC"),
+          e("div", { className: "brand-name" }, "Specter Corwin")
+        ),
+        e("div", { className: "heading" },
+          e("h1", null, "Google Ads Pipeline Calculator"),
+          e("p", null, "Project monthly pipeline value, ROAS, and customer acquisition cost")
+        ),
+        e("div", { className: "card" },
+          e("div", { className: "label-tiny" }, "Campaign Inputs"),
+          e(Slider, { label: "Monthly search volume", sub: "Sum across all keywords", value: searchVolume, min: 500, max: 100000, step: 500, onChange: setSearchVolume, format: function (v) { return fmtNum(v); } }),
+          e(Slider, { label: "Average CPC", sub: "Weighted average", value: cpc, min: 0.5, max: 50, step: 0.25, onChange: setCpc, format: function (v) { return usdDec(v); } }),
+          e(Slider, { label: "Click-through rate", sub: "3-5% B2B baseline", value: ctr, min: 0.5, max: 15, step: 0.1, onChange: setCtr, format: function (v) { return v.toFixed(1) + "%"; } }),
+          e(Slider, { label: "Landing page conversion", sub: "5% conservative B2B", value: lpConv, min: 0.5, max: 20, step: 0.1, onChange: setLpConv, format: function (v) { return v.toFixed(1) + "%"; } }),
+          e(Slider, { label: "Lead-to-customer close rate", sub: "15-25% B2B default", value: closeRate, min: 1, max: 50, step: 1, onChange: setCloseRate, format: function (v) { return v + "%"; } }),
+          e(Slider, { label: "Average customer value", sub: "Annual contract value", value: acv, min: 500, max: 250000, step: 500, onChange: setAcv, format: function (v) { return usd(v); } }),
+
+          e("div", { className: "hero" },
+            e("div", { className: "hero-cap" }, "Projected monthly pipeline"),
+            e("div", { className: "hero-val" }, usd(r.pipeline)),
+            e("div", { className: "hero-sub" },
+              "on ",
+              e("span", { className: "hero-strong" }, usd(r.adSpend)),
+              " monthly ad spend · ",
+              e("span", { className: "hero-roas" }, r.roas.toFixed(1) + "x ROAS")
+            )
+          ),
+          e("div", { className: "stats" },
+            e("div", { className: "stat" },
+              e("div", { className: "stat-label" }, "Monthly clicks"),
+              e("div", { className: "stat-val" }, fmtNum(r.clicks)),
+              e("div", { className: "stat-sub" }, "from " + fmtNum(searchVolume) + " searches")
+            ),
+            e("div", { className: "stat" },
+              e("div", { className: "stat-label" }, "Monthly leads"),
+              e("div", { className: "stat-val" }, fmtNum(r.leads, 1)),
+              e("div", { className: "stat-sub" }, usd(r.costPerLead) + " cost per lead")
+            ),
+            e("div", { className: "stat" },
+              e("div", { className: "stat-label" }, "New customers / mo"),
+              e("div", { className: "stat-val" }, fmtNum(r.customers, 1)),
+              e("div", { className: "stat-sub" }, usd(r.cac) + " CAC")
+            ),
+            e("div", { className: "stat" },
+              e("div", { className: "stat-label" }, "Annual pipeline"),
+              e("div", { className: "stat-val" }, usd(r.pipeline * 12)),
+              e("div", { className: "stat-sub" }, "at current settings")
+            )
+          )
+        ),
+        e("p", { className: "footer" }, "Conservative estimates based on industry benchmarks for B2B Google Ads. Real results depend on landing page quality, ad copy, and bidding strategy. Drag the sliders to test your own assumptions.")
+      );
+    }
+
+    if (typeof React === "undefined" || typeof ReactDOM === "undefined") {
+      document.getElementById("root").innerHTML = '<div style="padding:40px;text-align:center;font-family:Segoe UI,sans-serif;"><h2>Failed to load React</h2><p>Both CDN sources are unreachable. Check your network or content blocker.</p></div>';
+    } else {
+      ReactDOM.createRoot(document.getElementById("root")).render(e(PipelineCalculator));
+    }
+  </script>
+</body>
+</html>
